@@ -11,76 +11,87 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    progress = new QProgressBar;
-    this->showMaximized();
-    mytabwidget = ui->tabWidget;
-    edit = ui->lineEdit;
-    stabar = ui->statusbar;
+    progress = new QProgressBar; // 在堆内存上，分配一个进度条
+    this->showMaximized(); //窗口默认最大化打开
+    mytabwidget = ui->tabWidget; // ui->tabWidget是私有属性，复制到公有的成员变量，方便访问
+    edit = ui->lineEdit;  //同上
+    stabar = ui->statusbar;  //同上
 
-    ui->tabWidget->removeTab(1);
-    ui->tabWidget->removeTab(0);
+    ui->tabWidget->removeTab(1);  //移除两个tab以便重新添加
+    ui->tabWidget->removeTab(0); 
 
-    ui->lineEdit->setText("http://www.baidu.com/");
+    ui->lineEdit->setText("http://www.baidu.com/");  // 浏览器初始打开网页
 
+    // 下面太长了看着烦，分成几个部分
     //---------------------------------------------------------------------------------------
+    //  浏览器初始化，即第一个网页的一些设置
     MyWebView* webview = new MyWebView;
-    qlist.append(webview);
-    webview->load(QUrl("http://www.baidu.com/"));
+    qlist.append(webview); //添加视图
+    webview->load(QUrl("http://www.baidu.com/")); //加载网址
 
-    ui->tabWidget->addTab(webview,"tab");
+    ui->tabWidget->addTab(webview,"tab"); //将webview添加到窗口的tabwidget中
 
+    // 设置TabBar的text。注意绑定的是这个新建的view
     connect(webview,&MyWebView::titleChanged,this,[=](){
             ui->tabWidget->setTabText(0,webview->title());
     });
+        
+    //设置tabBar的图标
     connect(webview,&MyWebView::iconChanged,this,[=](QIcon ic){
         mytabwidget->setTabIcon(0,ic);
     });
 
     //---------------------------------------------------------------------------------------
+    // 对于的MyTabWidget的一些映射操作
+    //tabBar被左键单击两次，则关闭这个tab
     connect(mytabwidget,&MyTabWidget::tabBarDoubleClicked,this,[=](int index){
         emit mytabwidget->tabCloseRequested(index);
 
     });
-
+        
+    // tabBar右边的×被点击时，同样删除这个tab
     connect(mytabwidget,&MyTabWidget::tabCloseRequested,this,[=](int index){
         if (index == 0 )
         {
             exit(0);
         }
-        mytabwidget->removeTab(index);
-        qlist.at(index)->setUrl(QUrl("about:blank"));
-        qlist.removeAt(index);
-        edit->setText(qlist.at(index-1)->url().toString());
+        mytabwidget->removeTab(index); // 移除这个tab。但只是隐藏
+        qlist.at(index)->setUrl(QUrl("about:blank")); // 隐藏后，视图中的视频等仍在播放，更改为空链接后才算删除视图
+        qlist.removeAt(index); //视图链表中，删除这个视图
+        edit->setText(qlist.at(index-1)->url().toString()); // 设置blank链接会导致地址栏出现bug，这里更新一下
         ui->statusbar->showMessage("加载完成");//显示message
     });
-
+        
+    // 前进按钮
     connect(ui->forwardBtn,&QPushButton::clicked,this,[=](){
-        int index = mytabwidget->currentIndex();
-        qlist.at(index)->forward();
+        int index = mytabwidget->currentIndex(); // 当前在那个tab下
+        qlist.at(index)->forward(); //对应tab的视图前进。因为新建tab、视图和添加视图是在同时完成的，所以视图链表存储的顺序即是tab的索引顺序
     });
+    
+    // 后退按钮
     connect(ui->backBtn,&QPushButton::clicked,this,[=](){
         int index = mytabwidget->currentIndex();
         qlist.at(index)->back();
     });
+        
+    // 刷新按钮
     connect(ui->reloadBtn,&QPushButton::clicked,this,[=](){
         int index = mytabwidget->currentIndex();
         qlist.at(index)->reload();
     });
+        
     //---------------------------------------------------------------------------------------
-
+    // 其余的一些设置
+    // 地址栏的文本框内回车键被按下，则将当前tab中视图的url进行修改，即刷新网页
     connect(ui->lineEdit,&QLineEdit::returnPressed,this,[=](){
         int index = mytabwidget->currentIndex();
         qlist.at(index)->setUrl(QUrl(ui->lineEdit->text()));
     });
 
-//    connect(mytabwidget,&MyTabWidget::currentChanged,this,[=](int index){
-//        if (index >= 0 && index< qlist.length())
-//            edit->setText(qlist.at(index)->url().toString());
-//            emit qlist.at(index)->urlChanged(qlist.at(index)->url());
-//    });
-
-
+    
+    // 状态栏中添加进度条
     ui->statusbar->addWidget(progress);
+    // 进度条的qss设置
     progress->setStyleSheet("QProgressBar{\
                             border: none;\
                             color: white;\
@@ -91,6 +102,7 @@ MainWindow::MainWindow(QWidget *parent)
                             border: none;\
                             background: rgb(0, 160, 230);}");
 
+    // 初始化视图的加载进度
     connect(webview,&MyWebView::loadProgress,this,[=](int p){
         if (p ==100)
         {
