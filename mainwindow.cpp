@@ -40,6 +40,10 @@ MainWindow::MainWindow(QWidget *parent)
     connect(webview,&MyWebView::iconChanged,this,[=](QIcon ic){
         mytabwidget->setTabIcon(0,ic);
     });
+        
+    connect(webview,&MyWebView::urlChanged,this,[=](){
+       edit->setText(webview->url().toString());
+    });
 
     //---------------------------------------------------------------------------------------
     // 对于的MyTabWidget的一些映射操作
@@ -79,16 +83,15 @@ MainWindow::MainWindow(QWidget *parent)
         int index = mytabwidget->currentIndex();
         qlist.at(index)->reload();
     });
-        
-    //---------------------------------------------------------------------------------------
-    // 其余的一些设置
+       
     // 地址栏的文本框内回车键被按下，则将当前tab中视图的url进行修改，即刷新网页
     connect(ui->lineEdit,&QLineEdit::returnPressed,this,[=](){
         int index = mytabwidget->currentIndex();
         qlist.at(index)->setUrl(QUrl(ui->lineEdit->text()));
     });
-
-    
+        
+    //---------------------------------------------------------------------------------------
+    // 进度条的一些设置
     // 状态栏中添加进度条
     ui->statusbar->addWidget(progress);
     // 进度条的qss设置
@@ -115,11 +118,10 @@ MainWindow::MainWindow(QWidget *parent)
         }
     });
 
-    connect(webview,&MyWebView::urlChanged,this,[=](){
-       edit->setText(webview->url().toString());
-    });
 
     //---------------------------------------------------------------------------------------
+    // 解析VIP视频
+    // 添加站点到链表中
     this->qvs.append("https://www.playm3u8.cn/jiexi.php?url="); //加入可以供视频解析的站点
     this->qvs.append("http://jx.x-99.cn/api.php?id=");
     this->qvs.append("https://www.91jxs.com/jiexi/?url=");
@@ -128,22 +130,23 @@ MainWindow::MainWindow(QWidget *parent)
     this->qvs.append("https://jsap.attakids.com/?url=");
     this->qvs.append("https://jx.quanmingjiexi.com/?url=");
 
+    // VIP按钮被按下时
     connect(ui->vipBtn,&QPushButton::clicked,[=](){
         int index = mytabwidget->currentIndex();
         QString prefix = parseVideo();
-        QString link = ui->lineEdit->text();
-        bool flag = false;
+        QString link = ui->lineEdit->text(); // 获取当前网页链接
+        bool flag = false;  // 标志，网页地址中是否包含站点，即是否解析过
         for (int i=0;i<qvs.count();i++)
         {
-            if (link.contains(qvs.at(i)))
+            if (link.contains(qvs.at(i))) // 是否包含解析站点
             {
-                link.replace(qvs.at(i),prefix);
+                link.replace(qvs.at(i),prefix);  //包含解析站点，就替换以使用其余站点来解析
                 qlist.at(index)->setUrl(link);
                 flag = true;
                 break;
             }
         }
-        if (!flag)
+        if (!flag) //表示是第一次按VIP按钮
         {
             qlist.at(index)->setUrl(prefix + link);
         }
@@ -156,7 +159,7 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-
+// 随机获得一个解析视频的站点
 QString MainWindow::parseVideo()
 {   srand((unsigned long)time(NULL));
 
