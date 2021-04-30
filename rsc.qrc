@@ -1,0 +1,8 @@
+<RCC>
+    <qresource prefix="/icon">
+        <file>rsc/后退.svg</file>
+        <file>rsc/前进.svg</file>
+        <file>rsc/刷新.svg</file>
+        <file>rsc/vip.svg</file>
+    </qresource>
+</RCC>
