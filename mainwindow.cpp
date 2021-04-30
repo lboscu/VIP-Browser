@@ -55,7 +55,9 @@ MainWindow::MainWindow(QWidget *parent)
         
     // tabBar右边的×被点击时，同样删除这个tab
     connect(mytabwidget,&MyTabWidget::tabCloseRequested,this,[=](int index){
-        if (index == 0 )
+        
+        int num = mytabwidget->count();
+        if (index == 0 && num == 1) 
         {
             exit(0);
         }
@@ -63,6 +65,9 @@ MainWindow::MainWindow(QWidget *parent)
         disconnect(qlist.at(index),0,0,0); //关闭这个视图的所有信号对外的连接
         qlist.at(index)->setUrl(QUrl("about:blank")); // 隐藏后，视图中的视频等仍在播放，更改为空链接后才算删除视图
         qlist.removeAt(index); //视图链表中，删除这个视图
+
+        if (index != num-1)
+            edit->setText(qlist.at(index)->url().toString());
         ui->statusbar->showMessage("加载完成");//显示message
     });
     
