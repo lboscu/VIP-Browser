@@ -23,11 +23,12 @@ class MainWindow : public QMainWindow
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
-    MyTabWidget* mytabwidget;
+    // 这几个成员需要能够在MyWebView类中访问，所以需要新建这样的成员变量
+    MyTabWidget* mytabwidget; //mytabwidget
     QLineEdit* edit;
-    QList<MyWebView*> qlist;
-    QProgressBar* progress;
-    QStatusBar* stabar;
+    QList<MyWebView*> qlist; //存放MyWebView视图
+    QProgressBar* progress;  // 进度条类
+    QStatusBar* stabar; //状态栏
 
     QList<QString> qvs; // 可以供视频解析的网站站点
     QString parseVideo();
