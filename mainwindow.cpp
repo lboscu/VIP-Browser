@@ -60,10 +60,16 @@ MainWindow::MainWindow(QWidget *parent)
             exit(0);
         }
         mytabwidget->removeTab(index); // 移除这个tab。但只是隐藏
+        disconnect(qlist.at(index),0,0,0); //关闭这个视图的所有信号对外的连接
         qlist.at(index)->setUrl(QUrl("about:blank")); // 隐藏后，视图中的视频等仍在播放，更改为空链接后才算删除视图
         qlist.removeAt(index); //视图链表中，删除这个视图
-        edit->setText(qlist.at(index-1)->url().toString()); // 设置blank链接会导致地址栏出现bug，这里更新一下
         ui->statusbar->showMessage("加载完成");//显示message
+    });
+    
+    // 当tab变化时，对于当前tab更新地址栏
+    connect(mytabwidget,&MyTabWidget::currentChanged,this,[=](int index){
+        if (index >= 0 && index< qlist.length())
+            edit->setText(qlist.at(index)->url().toString());
     });
         
     // 前进按钮
